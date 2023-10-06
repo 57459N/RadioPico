@@ -23,14 +23,14 @@ def set_rx_mode():
 
 set_tx_mode()
 
-buf = b'\xde\xad\xbe\xed'
+buf = b'\xde\xad\xbe\xef'
 print(buf)
 
 led = Pin(25, Pin.OUT)
 led.low()
 
 while True:
-    # spi.write()
+    spi.write(buf)
 
     led.high()
     time.sleep(0.5)
