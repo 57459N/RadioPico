@@ -9,13 +9,19 @@ mode_2 = Pin(6, Pin.OUT)
 mode_3 = Pin(4, Pin.OUT)
 cs = Pin(13, Pin.OUT)
 
-rf1 = E10_433(spi_id=1, mode2=mode_2, mode3=mode_3, chip_select=cs,
+rf_tx = E10_433(spi_id=1, mode2=mode_2, mode3=mode_3, chip_select=cs,
               baudrate=100_000,
               polarity=0,
               phase=0,
               sck=Pin(14, Pin.OUT),
               mosi=Pin(15, Pin.OUT),
               miso=Pin(12, Pin.IN))
+
+# todo: solder and connect the second rf module
+# todo: divide two modules into different threads
+#
+#rf_rx = E10_433(spi_id=0,)
+
 
 buf = b'\xde\xad\xbe\xef'
 print(buf)
