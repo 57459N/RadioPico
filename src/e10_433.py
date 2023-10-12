@@ -40,15 +40,15 @@ class E10_433:
         """
         self.set_mode(True)
 
-        self.cs.high()
-        res = super().write(buf)
         self.cs.low()
+        res = self.spi.write(buf)
+        self.cs.high()
         return res
 
     def read(self, nbytes: int, write: int = 0x00) -> bytes:
         self.set_mode(False)
 
-        self.cs.high()
-        data = super().read(nbytes, write)
         self.cs.low()
+        data = self.spi.read(nbytes, write)
+        self.cs.high()
         return data

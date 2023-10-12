@@ -5,26 +5,6 @@ from _thread import allocate_lock, start_new_thread
 from sys import exit
 from e10_433 import E10_433
 
-mode_2 = Pin(6, Pin.OUT)
-mode_3 = Pin(4, Pin.OUT)
-cs = Pin(13, Pin.OUT)
-
-rf_tx = E10_433(spi_id=1, mode2=mode_2, mode3=mode_3, chip_select=cs,
-              baudrate=100_000,
-              polarity=0,
-              phase=0,
-              sck=Pin(14, Pin.OUT),
-              mosi=Pin(15, Pin.OUT),
-              miso=Pin(12, Pin.IN))
-
-# todo: solder and connect the second rf module
-# todo: divide two modules into different threads
-#
-#rf_rx = E10_433(spi_id=0,)
-
-
-buf = b'\xde\xad\xbe\xef'
-print(buf)
 
 led = Pin(25, Pin.OUT)
 led.low()
@@ -33,19 +13,49 @@ spLock = allocate_lock()
 
 
 def thread1():
-    while True:
-        if spLock.locked():
-            exit()
+    rf_rx = E10_433(spi_id=0,
+                    mode2=Pin(20, Pin.OUT),
+                    mode3=Pin(21, Pin.OUT),
+                    chip_select=Pin(5, Pin.OUT),
+                    baudrate=100_000,
+                    polarity=0,
+                    phase=0,
+                    sck=Pin(2, Pin.OUT),
+                    mosi=Pin(7, Pin.OUT),
+                    miso=Pin(16, Pin.IN))
 
-        print('core 1')
-        time.sleep(1)
+    packet_len = 16
+    while True:
+        try:
+            if spLock.locked():
+                exit()
+
+            data = rf_rx.read(packet_len)
+            print(data)
+            time.sleep(0.1)
+        except KeyboardInterrupt:
+            exit()
 
 
 def thread0():
+    rf_tx = E10_433(spi_id=1,
+                    mode2=Pin(6, Pin.OUT),
+                    mode3=Pin(4, Pin.OUT),
+                    chip_select=Pin(13, Pin.OUT),
+                    baudrate=100_000,
+                    polarity=0,
+                    phase=0,
+                    sck=Pin(14, Pin.OUT),
+                    mosi=Pin(15, Pin.OUT),
+                    miso=Pin(12, Pin.IN))
+
+    buf = b'\xde\xad\xbe\xef'
+    print(buf)
+
     while True:
         try:
-            print('core 0')
-            time.sleep(1)
+            rf_tx.write(buf)
+
         except KeyboardInterrupt as e:
             spLock.acquire()
             raise e
@@ -53,12 +63,3 @@ def thread0():
 
 start_new_thread(thread1, ())
 thread0()
-
-while True:
-    rf1.write(buf)
-    print(buf)
-
-    led.high()
-    time.sleep(0.5)
-    led.low()
-    time.sleep(0.5)
