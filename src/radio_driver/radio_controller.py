@@ -27,14 +27,12 @@ class RadioController:
 
     def __init__(self):
         if not self.initialized:
-
             cs_pin = Pin(RadioHardwareConfig.SPI_RADIO_CS_PIN, Pin.OUT)
             sdn_pin = Pin(RadioHardwareConfig.RADIO_SDN_PIN, Pin.OUT)
             sck_pin = Pin(RadioHardwareConfig.SPI_RADIO_SCK_PIN)
             mosi_pin = Pin(RadioHardwareConfig.SPI_RADIO_MOSI_PIN)
             miso_pin = Pin(RadioHardwareConfig.SPI_RADIO_MISO_PIN)
             irq_pin = Pin(RadioHardwareConfig.DEFAULT_RADIO_IRQ_PIN, Pin.IN)
-
 
             module_internal_spi = machine.SPI(RadioHardwareConfig.SPI_RADIO_HARDWARE_CHANNEL,
                                               baudrate=5000000,
@@ -45,7 +43,7 @@ class RadioController:
                                               sck=sck_pin,
                                               mosi=mosi_pin,
                                               miso=miso_pin)
-#         #
+            #         #
             self._radio_tranciever_driver = SI4463(
                 spi=module_internal_spi,
                 sck_pin=sck_pin,
@@ -59,12 +57,22 @@ class RadioController:
             self.initialized = True
 
     def initialize(self):
-        self._radio_tranciever_driver.initialize()
-        self._radio_tranciever_driver.clear_int_status()
-        self._radio_tranciever_driver.clear_fifo(clear_rx=True, clear_tx=True)
+        rc = self._radio_tranciever_driver.initialize()
+        if rc != 0:
+            print('radio_tranciever_driver.initialize: failed')
+
+        rc = self._radio_tranciever_driver.clear_int_status()
+        if rc != 0:
+            print('radio_tranciever_driver.clear_int_status: failed')
+
+        rc = self._radio_tranciever_driver.clear_fifo(clear_rx=True, clear_tx=True)
+        if rc != 0:
+            print('_radio_tranciever_driver.clear_fifo: failed')
 
         self._radio_parser = RadioMessageParser()
         self.radio_listener_task_handler = uasyncio.create_task(self.handle_radio_msg())
+
+        return rc
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -78,13 +86,13 @@ class RadioController:
         while True:
             await self._radio_tranciever_driver.rx_tsf.wait()
             # TODO: Add handle for lack of space inside queue and item dropout as the result
-#             print("A")
+            #             print("A")
             try:
                 radio_message = self._radio_tranciever_driver.get_rx_packet()
                 await self._radio_parser.parse(radio_message)
             except Exception as e:
-                    print(f"Exception : {e}")
-                    
+                print(f"Exception : {e}")
+
             self._radio_tranciever_driver.clear_rx_buff()
             self._radio_tranciever_driver.set_state(8)
             print("Tranciever state : {}".format(self._radio_tranciever_driver.get_state()))

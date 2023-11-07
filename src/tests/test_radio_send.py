@@ -18,13 +18,13 @@ TEST_RADIO_MESSAGE = {
 
 async def radio_packet_sender(driver, message):
     while True:
-        driver.send_message("BSUIM", "BSUGS", message)
-        await uasyncio.sleep_ms(1000)
+        task = uasyncio.create_task(driver.send_message("PICOS", "PICOWR", message))
+        await uasyncio.sleep_ms(3000)
 
 
 async def test_radio_send():
     radio_controller = RadioController()
-    if not radio_controller.initialize():
+    if radio_controller.initialize() != 0:
         print(f"Radio Controller Init failed")
         return None
     radio_controller.start_tx()

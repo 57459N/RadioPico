@@ -1,4 +1,6 @@
 import uasyncio
+
+import tests.test_radio_send
 from device_controller.slot_controller import SlotController
 from radio_driver.radio_controller import RadioController
 from can_driver.can.can_controller import CANController
@@ -24,11 +26,13 @@ async def main():
     slot_controller = SlotController()
     slot_controller.initialize()
 
-    # VAR 2
-    radio_controller = RadioController()
-    radio_controller.initialize()
-    radio_controller.start_rx()
+    print('start sending test')
+    await tests.test_radio_send.test_radio_send()
 
+    # VAR 2
+    # radio_controller = RadioController()
+    # radio_controller.initialize()
+    # radio_controller.start_rx()
 
 #     can_controller = CANController()
 #     can_controller.initialize()
